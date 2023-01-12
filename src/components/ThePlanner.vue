@@ -1,18 +1,28 @@
 <template>
 
     <svg :width="state.width" :height = "state.height" class="planner">
-      <g id="grid">
-        <line v-for="(elm, index) in state.timeBeam" :class=" {'grid-lines__head--major':elm.majorSeparator,'grid-lines__head--minor':!elm.majorSeparator,}" :x1="(index*state.colWidth)+state.namesColumnWidth" y1="0" :x2="(index*state.colWidth)+state.namesColumnWidth" :y2="state.height" stroke="black" />
-        <line v-for="(elm, index) in issues" x1="0" :y1="(index*state.rowHeight)+state.headerHeight" :x2="state.width" :y2="(index*state.rowHeight)+state.headerHeight" stroke="black" />
-      </g>
-      <g id="headline">
-        <g v-for="(elm, index) in state.timeBeam">
-          <text v-if="elm.newYear" class="grid_font__head--day" :x="(index*state.colWidth)+state.namesColumnWidth" y="10">{{ formatDateTime(elm.startDate,"YY") }} </text>
-          <text v-if="elm.newMonth" class="grid_font__head--day" :x="(index*state.colWidth)+state.namesColumnWidth" y="20">{{ formatDateTime(elm.startDate,"MMM") }} </text>
-          <text class="grid_font__head--day" :x="(index*state.colWidth)+state.namesColumnWidth" y="30">{{ formatDateTime(elm.startDate,"DD") }} </text>
-          <text class="grid_font__head--day" :x="(index*state.colWidth)+state.namesColumnWidth" y="40">{{ formatDateTime(elm.startDate,"dd") }} </text>
+        <g id="vertical" v-for="(elm, index) in state.timeBeam">
+          <g id="headline">
+            <text v-if="elm.newYear" class="grid_font__head--year" :x="(index*state.colWidth)+state.namesColumnWidth+1" y="10">{{ formatDateTime(elm.startDate,"YYYY") }} </text>
+            <line v-if="elm.newYear" class="grid-lines__head--new" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" y1="0" :y2="state.headerHeight"></line>
+
+            <text v-if="elm.newMonth" class="grid_font__head--month" :x="(index*state.colWidth)+state.namesColumnWidth+1" y="20">{{ formatDateTime(elm.startDate,"MMM") }} </text>
+            <line v-if="elm.newMonth" class="grid-lines__head--new" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" y1="10" :y2="state.headerHeight"></line>
+
+            <text class="grid_font__head--day" :x="(index*state.colWidth)+state.namesColumnWidth+1" y="30">{{ formatDateTime(elm.startDate,"DD") }} </text>
+            <text class="grid_font__head--day" :x="(index*state.colWidth)+state.namesColumnWidth+1" y="40">{{ formatDateTime(elm.startDate,"dd") }} </text>
+            <line v-if="elm.type==='day'" :class="{'grid-lines__head--new':elm.newWeek,'grid-lines--major':elm.majorSeparator, 'grid-lines--minor':!elm.majorSeparator && !elm.newWeek}" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" y1="20" :y2="state.headerHeight"></line>
           </g>
-      </g>
+          <g id="grid">
+            <line v-if="elm.type==='day'" :class="{'grid-lines__head--new':elm.newWeek, 'grid-lines--minor': !elm.newWeek}" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" :y1="state.headerHeight" :y2="state.height"></line>
+            <line v-if="elm.type==='week'" :class="{'grid-lines__head--new':elm.newMonth, 'grid-lines--minor': !elm.newMonth}" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" :y1="state.headerHeight" :y2="state.height"></line>
+            <line v-if="elm.type==='month'" :class="{'grid-lines__head--new':elm.newYear, 'grid-lines--minor': !elm.newYear}" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" :y1="state.headerHeight" :y2="state.height"></line>
+
+            <line v-if="elm.majorSeparator" class="grid-lines--major" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" y1="0" :y2="state.height"></line>
+          </g>
+        </g>
+
+
       <g id="body">
         <g id="names"></g>
         <g id="bars"></g>
@@ -34,7 +44,7 @@ export default {
   setup(props) {
     let colWith = 16
     let namesColumnWidth = 300
-    let headerHeight=50
+    let headerHeight=45
     let rowHeight=30
     let timeBeam = makeTimeBeam()
     debugger
@@ -62,20 +72,32 @@ export default {
   padding: 10px;
 }
 
-.grid-lines__head--minor{
-  stroke-dasharray: 5 3;
+.grid-lines--minor{
+  stroke-dasharray: 2 2;
   stroke-width: 1px;
   stroke: #aaaaaa;
 
 }
-.grid-lines__head--major{
+.grid-lines__head--new{
+  stroke-width: 1px;
+  stroke: #CCCCCC;
+
+}
+.grid-lines--major{
   stroke-width: 1px;
   stroke: #000000;
 }
 
 .grid_font__head--day{
- font-size: 10px;
+ font-size: 9px;
 }
+.grid_font__head--month{
+  font-size: 9px;
+}
+.grid_font__head--year{
+  font-size: 9px;
+}
+
 .grid-lines__body--minor{
 
 }
