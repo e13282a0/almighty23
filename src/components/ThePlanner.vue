@@ -17,7 +17,7 @@
             <line v-if="elm.type==='week'" :class="{'grid-lines__head--new':elm.newMonth, 'grid-lines--minor': !elm.newMonth}" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" :y1="elm.newMonth?10:20" :y2="state.height"></line>
             <line v-if="elm.type==='month'" :class="{'grid-lines__head--new':elm.newYear, 'grid-lines--minor': !elm.newYear}" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" :y1="elm.newYear?0:10" :y2="state.height"></line>
 
-            <line v-if="elm.majorSeparator" class="grid-lines--major" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" y1="0" :y2="state.height"></line>
+            <line v-if="index===0 || elm.majorSeparator" class="grid-lines--major" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" y1="0" :y2="state.height"></line>
           </g>
         </g>
 
@@ -46,7 +46,7 @@ export default {
     let headerHeight=45
     let rowHeight=30
     let timeBeam = makeTimeBeam()
-    debugger
+    //debugger
     const state= reactive({
       colWidth:colWith,
       namesColumnWidth:namesColumnWidth,
@@ -74,7 +74,7 @@ export default {
 .grid-lines--minor{
   stroke-dasharray: 2 2;
   stroke-width: 1px;
-  stroke: #aaaaaa;
+  stroke: #999999;
 
 }
 .grid-lines__head--new{
