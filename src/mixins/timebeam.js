@@ -6,7 +6,7 @@ export function makeTimeBeam( config = { days: 35, weeks: 48, months: 12 }) {
     let months = config.weeks;
     let result = [];
     const today = moment();
-    const startDate = today.startOf("isoWeek"); // add one day if startday is sunay
+    const startDate = today.startOf("isoWeek"); // add one day if start day is sunay
     // days
     for (let i = 0; i < days; i++) {
         result.push({
@@ -68,4 +68,32 @@ export function makeTimeBeam( config = { days: 35, weeks: 48, months: 12 }) {
         //state.timeBeam = result;
     }
     return result
+}
+
+
+export function getTimeBeamIndexByDate(date, timeBeam) {
+    debugger;
+    let index = timeBeam.findIndex(function (elm) {
+        return elm.startDate >= moment(date).startOf("day");
+    });
+    return index < 0 ? 0 : index;
+}
+export function getTimeBeamPositionByDate(date, width, timeBeam) {
+    let index = timeBeam.findIndex(function (elm) {
+        return elm.startDate >= moment(date).startOf("day");
+    });
+    if (index < 0) return { index: 0, offset: 0 };
+
+    let timeSpan = Math.round(timeBeam[index].endDate.diff(timeBeam[index].startDate, "minutes"));
+    let minutes = moment(date).diff(timeBeam[index].startDate, "minutes");
+    let offset = Math.round(width * (minutes / timeSpan));
+    // eslint-disable-next-line
+    //debugger;
+    return (index*width)+offset
+}
+
+export function getTimeBeamLengthByDate(date1, date2, width, timeBeam) {
+    let pos2=getTimeBeamPositionByDate(date2, width, timeBeam)
+    let pos1=getTimeBeamPositionByDate(date1, width, timeBeam)
+    return pos2-pos1;
 }
