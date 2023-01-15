@@ -72,23 +72,22 @@ export function makeTimeBeam( config = { days: 35, weeks: 48, months: 12 }) {
 
 
 export function getTimeBeamIndexByDate(date, timeBeam) {
-    debugger;
+    //debugger;
     let index = timeBeam.findIndex(function (elm) {
         return elm.startDate >= moment(date).startOf("day");
     });
     return index < 0 ? 0 : index;
 }
 export function getTimeBeamPositionByDate(date, width, timeBeam) {
-    let index = timeBeam.findIndex(function (elm) {
-        return elm.startDate >= moment(date).startOf("day");
-    });
-    if (index < 0) return { index: 0, offset: 0 };
+    let index =getTimeBeamIndexByDate(date, timeBeam)
+    if (index < 0) return 0;
 
     let timeSpan = Math.round(timeBeam[index].endDate.diff(timeBeam[index].startDate, "minutes"));
     let minutes = moment(date).diff(timeBeam[index].startDate, "minutes");
     let offset = Math.round(width * (minutes / timeSpan));
     // eslint-disable-next-line
     //debugger;
+    console.log(`date:${moment(date, 'MM.DD.YYY')}, index:${index}, offset:${offset}, pos:${(index*width)+offset}`)
     return (index*width)+offset
 }
 
