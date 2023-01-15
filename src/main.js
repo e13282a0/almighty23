@@ -5,6 +5,7 @@ import { loadFonts } from './plugins/webfontloader'
 import store from './store'
 import './registerServiceWorker'
 
+
 loadFonts()
 
 createApp(App).use(store)

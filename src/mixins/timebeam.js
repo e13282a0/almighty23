@@ -87,7 +87,7 @@ export function getTimeBeamPositionByDate(date, width, timeBeam) {
     let offset = Math.round(width * (minutes / timeSpan));
     // eslint-disable-next-line
     //debugger;
-    console.log(`date:${moment(date, 'MM.DD.YYY')}, index:${index}, offset:${offset}, pos:${(index*width)+offset}`)
+    //console.log(`date:${moment(date, 'MM.DD.YYY')}, index:${index}, offset:${offset}, pos:${(index*width)+offset}`)
     return (index*width)+offset
 }
 
