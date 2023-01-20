@@ -10,11 +10,12 @@
 import { computed } from 'vue'
 import { useStore } from 'vuex'
 import ThePlanner from './components/ThePlanner.vue'
+
 export default {
   name: 'App',
 
   components: {
-    ThePlanner,
+    ThePlanner
   },
   setup() {
     const store = useStore()

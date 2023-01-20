@@ -2,12 +2,7 @@
 
   <svg :width="state.width" :height="state.height" class="planner">
 
-    <g v-if="state.gridSelector">
-      <rect class="grid-mouseover" :x="state.namesColumnWidth+state.gridSelectionPos.x" :y="state.headerHeight+state.gridSelectionPos.y" :width="state.colWidth" :height="state.rowHeight"></rect>
-      <line class="grid-mouseover" :x1="state.namesColumnWidth+(state.gridSelectionPos.x+state.colWidth/2)" :x2="state.namesColumnWidth+(state.gridSelectionPos.x+state.colWidth/2)" :y1="state.headerHeight+state.gridSelectionPos.y+4" :y2="state.headerHeight+state.gridSelectionPos.y+state.rowHeight-4"></line>
-      <line class="grid-mouseover" :x1="state.namesColumnWidth+state.gridSelectionPos.x+4" :x2="state.namesColumnWidth+state.gridSelectionPos.x+state.colWidth-4" :y1="state.headerHeight+state.gridSelectionPos.y+(state.rowHeight/2)" :y2="state.headerHeight+state.gridSelectionPos.y+(state.rowHeight/2)"></line>
-
-    </g>
+    <planner-grid-selector v-if="state.gridSelector" :x="state.namesColumnWidth+state.gridSelectionPos.x" :y="state.headerHeight+state.gridSelectionPos.y" :width="state.colWidth" :height="state.rowHeight" />
     <rect class="grid-background" :x="state.namesColumnWidth" :y="state.headerHeight" :width="state.gridWidth" :height="state.gridHeight" @mouseenter="mouseEnter" @mouseleave="mouseLeave"></rect>
 
 
@@ -55,14 +50,18 @@
 </template>
 
 <script>
+
 import {reactive, ref} from 'vue';
 import {makeTimeBeam, getTimeBeamIndexByDate, getTimeBeamPositionByDate, getTimeBeamLengthByDate} from '@/mixins/timebeam'
 import moment from "moment";
 import _ from 'lodash'
+import PlannerGridSelector from "@/components/planner/PlannerGridSelector.vue";
 
 export default {
   name: "ThePlanner",
+  components: {PlannerGridSelector},
   props: ["issues"],
+
   setup(props) {
     let colWidth = 16
     let namesColumnWidth = 80
@@ -139,14 +138,6 @@ export default {
 </script>
 
 <style scoped>
-
-.grid-mouseover {
-  fill: lightskyblue;
-  fill-opacity: 0.7;
-  stroke: blue;
-  stroke-opacity: 0.7;
-}
-
 
 .grid-lines--minor {
   stroke-dasharray: 2 2;
