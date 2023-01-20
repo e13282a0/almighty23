@@ -125,7 +125,7 @@ export default {
         state.gridSelectionPos = getGridSelectionPos(event.pageX, event.pageY)
     }
 
-    return {state, css, formatDateTime, getTimeBeamIndexByDate, getTimeBeamPositionByDate, getTimeBeamLengthByDate, mouseEnter, mouseLeave}
+    return {state, css, formatDateTime, mouseEnter, mouseLeave}
   }
 
 }
