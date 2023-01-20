@@ -2,8 +2,15 @@
 
   <svg :width="state.width" :height="state.height" class="planner">
 
+    <g v-if="state.gridSelector">
+      <rect class="grid-mouseover" :x="state.namesColumnWidth+state.gridSelectionPos.x" :y="state.headerHeight+state.gridSelectionPos.y" :width="state.colWidth" :height="state.rowHeight"></rect>
+      <line class="grid-mouseover" :x1="state.namesColumnWidth+(state.gridSelectionPos.x+state.colWidth/2)" :x2="state.namesColumnWidth+(state.gridSelectionPos.x+state.colWidth/2)" :y1="state.headerHeight+state.gridSelectionPos.y+4" :y2="state.headerHeight+state.gridSelectionPos.y+state.rowHeight-4"></line>
+      <line class="grid-mouseover" :x1="state.namesColumnWidth+state.gridSelectionPos.x+4" :x2="state.namesColumnWidth+state.gridSelectionPos.x+state.colWidth-4" :y1="state.headerHeight+state.gridSelectionPos.y+(state.rowHeight/2)" :y2="state.headerHeight+state.gridSelectionPos.y+(state.rowHeight/2)"></line>
+
+    </g>
     <rect class="grid-background" :x="state.namesColumnWidth" :y="state.headerHeight" :width="state.gridWidth" :height="state.gridHeight" @mouseenter="mouseEnter" @mouseleave="mouseLeave"></rect>
-    <rect v-if="state.gridSelector" class="grid-mouseover" :x="state.namesColumnWidth+state.gridSelectionPos.x" :y="state.headerHeight+state.gridSelectionPos.y" :width="state.colWidth" :height="state.rowHeight"></rect>
+
+
     <!-- Grid -->
     <g id="vertical" v-for="(elm, index) in state.timeBeam">
       <g id="grid">
@@ -134,8 +141,10 @@ export default {
 <style scoped>
 
 .grid-mouseover {
-  fill: none;
+  fill: lightskyblue;
+  fill-opacity: 0.7;
   stroke: blue;
+  stroke-opacity: 0.7;
 }
 
 
@@ -183,6 +192,6 @@ export default {
 
 .grid-background {
   fill: white;
-  fill-opacity: 0.99;
+  fill-opacity: 0.01;
 }
 </style>
