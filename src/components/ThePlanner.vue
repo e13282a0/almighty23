@@ -2,9 +2,9 @@
 
   <svg :width="state.width" :height="state.height" class="planner">
 
-    <rect class="grid-background" :x="state.namesColumnWidth" :y="state.headerHeight" :width="state.gridWidth" :height="state.gridHeight"  @mouseenter="mouseEnter" @mouseleave="mouseLeave"></rect>
+    <rect class="grid-background" :x="state.namesColumnWidth" :y="state.headerHeight" :width="state.gridWidth" :height="state.gridHeight" @mouseenter="mouseEnter" @mouseleave="mouseLeave"></rect>
     <rect v-if="state.gridSelector" class="grid-mouseover" :x="state.namesColumnWidth+state.gridSelectionPos.x" :y="state.headerHeight+state.gridSelectionPos.y" :width="state.colWidth" :height="state.rowHeight"></rect>
-
+    <!-- Grid -->
     <g id="vertical" v-for="(elm, index) in state.timeBeam">
       <g id="grid">
         <line v-if="elm.type==='day'" :class="{'grid-lines__head--new':elm.newWeek, 'grid-lines--minor': !elm.newWeek}" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" y1="20"
@@ -27,17 +27,17 @@
         <text class="grid_font__head--day" :x="(index*state.colWidth)+state.namesColumnWidth+1" y="30">{{ formatDateTime(elm.startDate, "DD") }}</text>
         <text class="grid_font__head--day" :x="(index*state.colWidth)+state.namesColumnWidth+1" y="40">{{ formatDateTime(elm.startDate, "dd") }}</text>
       </g>
-      <line  class="grid-lines--major" x1="0" :x2="state.width" :y1="state.headerHeight" :y2="state.headerHeight"></line>
+      <line class="grid-lines--major" x1="0" :x2="state.width" :y1="state.headerHeight" :y2="state.headerHeight"></line>
 
     </g>
-
+    <!-- Bars -->
     <g id="body" :style="`transform: translateY( ${state.headerHeight}px)`">
-      <g id="row" v-for="(elm, index) in issues">
+      <g id="row" v-for="(elm, index) in state.issueBars">
         <g id="names">
           <text class="grid_font__issue--name" :x="0" :y="((index+1)*state.rowHeight)">{{ elm.name }}</text>
         </g>
         <g id="bars" :style="`transform: translateX(${state.namesColumnWidth}px`">
-          <rect class="bar__issue--overview" :x="getTimeBeamPositionByDate(elm.startDate, state.colWidth, state.timeBeam)" :y="(index*state.rowHeight)" :width="getTimeBeamLengthByDate(elm.startDate, elm.endDate, state.colWidth, state.timeBeam)" height="10"></rect>
+          <rect class="bar__issue--overview" :x="elm.bar.x1" :y="(index*state.rowHeight)" :width="elm.bar.width" height="10"></rect>
         </g>
       </g>
     </g>
@@ -49,14 +49,15 @@
 
 <script>
 import {reactive, ref} from 'vue';
-import {makeTimeBeam,getTimeBeamIndexByDate,getTimeBeamPositionByDate,getTimeBeamLengthByDate} from '@/mixins/timebeam'
+import {makeTimeBeam, getTimeBeamIndexByDate, getTimeBeamPositionByDate, getTimeBeamLengthByDate} from '@/mixins/timebeam'
 import moment from "moment";
+import _ from 'lodash'
 
 export default {
   name: "ThePlanner",
   props: ["issues"],
   setup(props) {
-    let colWith = 16
+    let colWidth = 16
     let namesColumnWidth = 80
     let headerHeight = 45
     let rowHeight = 16
@@ -64,33 +65,47 @@ export default {
     let padding = 10
     //debugger
 
+    let issueBars= props.issues.map(issue => {
+      // size and position bars
+      let x1 = getTimeBeamPositionByDate(issue.startDate, colWidth, timeBeam)
+      let x2 = getTimeBeamPositionByDate(issue.endDate, colWidth, timeBeam)
+      issue.bar = {x1: x1, x2: x2, width: x2 - x1};
+          return issue;
+        }
+    );
+
     const state = reactive({
-      colWidth: colWith,
+      colWidth: colWidth,
       namesColumnWidth: namesColumnWidth,
       headerHeight: headerHeight,
       rowHeight: rowHeight,
-      width: namesColumnWidth + (timeBeam.length * colWith),
-      height: headerHeight + ((props.issues.length+1) * rowHeight),
-      gridWidth:(timeBeam.length * colWith),
-      gridHeight:((props.issues.length+1) * rowHeight),
+      width: namesColumnWidth + (timeBeam.length * colWidth),
+      height: headerHeight + ((props.issues.length + 1) * rowHeight),
+      gridWidth: (timeBeam.length * colWidth),
+      gridHeight: ((props.issues.length + 1) * rowHeight),
       timeBeam: timeBeam,
-      gridSelector:false,
-      gridSelectionPos:{x:0, y:0}
+      issueBars: issueBars,
+      gridSelector: false,
+      gridSelectionPos: {x: 0, y: 0},
     })
-    const css=reactive({
-      padding:padding+"px"
+    const css = reactive({
+      padding: padding + "px"
     })
 
     function formatDateTime(value, format = "YYYY-MM-DD") {
       return moment(value).format(format);
     }
 
+    function cursor() {
+      return `cursor: ${state.dragOffsetX ? 'grabbing' : 'grab'}`
+    }
+
     function getGridSelectionPos(pageX, pageY) {
-      let x = pageX-padding-namesColumnWidth;
-      let y = pageY-padding-headerHeight;
-      let roundedX=Math.floor(x/colWith)*colWith
-      let roundedY=Math.floor(y/rowHeight)*rowHeight
-      return {x:roundedX, y:roundedY}
+      let x = pageX - padding - namesColumnWidth;
+      let y = pageY - padding - headerHeight;
+      let roundedX = Math.floor(x / colWidth) * colWidth
+      let roundedY = Math.floor(y / rowHeight) * rowHeight
+      return {x: roundedX, y: roundedY}
     }
 
     function mouseEnter(event) {
@@ -104,12 +119,13 @@ export default {
       state.gridSelector = false;
       event.target.removeEventListener('mousemove', mouseMove);
     }
+
     function mouseMove(event) {
-      console.log(event.pageX, event.pageY);
-      state.gridSelectionPos = getGridSelectionPos(event.pageX,event.pageY)
+        console.log(event.pageX, event.pageY);
+        state.gridSelectionPos = getGridSelectionPos(event.pageX, event.pageY)
     }
 
-    return {state,css, formatDateTime,getTimeBeamIndexByDate,getTimeBeamPositionByDate,getTimeBeamLengthByDate,mouseEnter,mouseLeave}
+    return {state, css, formatDateTime, getTimeBeamIndexByDate, getTimeBeamPositionByDate, getTimeBeamLengthByDate, mouseEnter, mouseLeave}
   }
 
 }
@@ -118,8 +134,8 @@ export default {
 <style scoped>
 
 .grid-mouseover {
-  fill:none;
-  stroke:blue;
+  fill: none;
+  stroke: blue;
 }
 
 
@@ -166,7 +182,7 @@ export default {
 }
 
 .grid-background {
-  fill:white;
+  fill: white;
   fill-opacity: 0.99;
 }
 </style>
