@@ -5,7 +5,6 @@
     <planner-grid-selector v-if="state.gridSelector" :x="state.namesColumnWidth+state.gridSelectionPos.x" :y="state.headerHeight+state.gridSelectionPos.y" :width="state.colWidth" :height="state.rowHeight" />
     <rect class="grid-background" :x="state.namesColumnWidth" :y="state.headerHeight" :width="state.gridWidth" :height="state.gridHeight" @mouseenter="mouseEnter" @mouseleave="mouseLeave" />
 
-
     <!-- Grid -->
     <g id="vertical" v-for="(elm, index) in state.timeBeam">
       <g id="grid">
@@ -15,7 +14,6 @@
               :y1="elm.newMonth?10:20" :y2="state.height"></line>
         <line v-if="elm.type==='month'" :class="{'grid-lines__head--new':elm.newYear, 'grid-lines--minor': !elm.newYear}" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth"
               :y1="elm.newYear?0:10" :y2="state.height"></line>
-
         <line v-if="index===0 || elm.majorSeparator" class="grid-lines--major" :x1="(index*state.colWidth)+state.namesColumnWidth" :x2="(index*state.colWidth)+state.namesColumnWidth" y1="0" :y2="state.height"></line>
       </g>
 
@@ -34,13 +32,9 @@
     </g>
     <!-- Bars -->
     <g id="body" :style="`transform: translateY( ${state.headerHeight}px)`">
-      <g id="row" v-for="(elm, index) in state.issueBars">
-        <g id="names">
-          <text class="grid_font__issue--name" :x="0" :y="((index+1)*state.rowHeight)">{{ elm.name }}</text>
-        </g>
-        <g id="bars" :style="`transform: translateX(${state.namesColumnWidth}px`">
-          <rect class="bar__issue--overview" :x="elm.bar.x1" :y="(index*state.rowHeight)" :width="elm.bar.width" height="10"></rect>
-        </g>
+      <g id="row" v-for="(issue, index) in state.issueBars" :style="`transform: translateY(${(index*state.rowHeight)}px`">
+        <planner-name :issue="issue" type="issue" />
+        <planner-bar :issue="issue" type="issue"  />
       </g>
     </g>
 
@@ -56,10 +50,12 @@ import {makeTimeBeam, getTimeBeamIndexByDate, getTimeBeamPositionByDate, getTime
 import moment from "moment";
 import _ from 'lodash'
 import PlannerGridSelector from "@/components/planner/PlannerGridSelector.vue";
+import PlannerBar from "@/components/planner/PlannerBar.vue";
+import PlannerName from "@/components/planner/PlannerName.vue";
 
 export default {
   name: "ThePlanner",
-  components: {PlannerGridSelector},
+  components: {PlannerGridSelector,PlannerBar,PlannerName},
   props: ["issues"],
 
   setup(props) {
@@ -167,14 +163,6 @@ export default {
 
 .grid_font__head--year {
   font-size: 9px;
-}
-
-.grid_font__issue--name {
-  font-size: 12px;
-}
-
-.bar__issue--overview {
-  stroke-width: 0;
 }
 
 .planner {
