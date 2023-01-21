@@ -32,9 +32,9 @@
     </g>
     <!-- Bars -->
     <g id="body" :style="`transform: translateY( ${state.headerHeight}px)`">
-      <g id="row" v-for="(issue, index) in state.issueBars" :style="`transform: translateY(${(index*state.rowHeight)}px`">
+      <g id="row" v-for="(issue, index) in issueBars" :style="`transform: translateY(${(index*state.rowHeight)}px`">
         <planner-name :issue="issue" type="issue" />
-        <planner-bar :issue="issue" type="issue"  />
+        <planner-bar :issue="issue" type="issue" @click="setActive(issue.id)"/>
       </g>
     </g>
 
@@ -45,7 +45,7 @@
 
 <script>
 
-import {reactive, ref} from 'vue';
+import {reactive, computed} from 'vue';
 import {makeTimeBeam, getTimeBeamIndexByDate, getTimeBeamPositionByDate, getTimeBeamLengthByDate} from '@/mixins/timebeam'
 import moment from "moment";
 import _ from 'lodash'
@@ -67,14 +67,7 @@ export default {
     let padding = 10
     //debugger
 
-    let issueBars= props.issues.map(issue => {
-      // size and position bars
-      let x1 = getTimeBeamPositionByDate(issue.startDate, colWidth, timeBeam)
-      let x2 = getTimeBeamPositionByDate(issue.endDate, colWidth, timeBeam)
-      issue.bar = {x1: x1, x2: x2, width: x2 - x1};
-          return issue;
-        }
-    );
+
 
     const state = reactive({
       colWidth: colWidth,
@@ -86,10 +79,24 @@ export default {
       gridWidth: (timeBeam.length * colWidth),
       gridHeight: ((props.issues.length + 1) * rowHeight),
       timeBeam: timeBeam,
-      issueBars: issueBars,
       gridSelector: false,
+      selectedID:-1,
       gridSelectionPos: {x: 0, y: 0},
     })
+
+    const issueBars = computed(() => {
+      return props.issues.map(issue => {
+        // size and position bars
+        let x1 = getTimeBeamPositionByDate(issue.startDate, colWidth, timeBeam)
+        let x2 = getTimeBeamPositionByDate(issue.endDate, colWidth, timeBeam)
+        issue.isActive=issue.id=== state.selectedID
+        issue.isPreselected=false
+        issue.isHighlighted=false
+        issue.bar = {x1: x1, x2: x2, width: x2 - x1};
+        return issue;
+      });
+    })
+
     const css = reactive({
       padding: padding + "px"
     })
@@ -127,7 +134,12 @@ export default {
         state.gridSelectionPos = getGridSelectionPos(event.pageX, event.pageY)
     }
 
-    return {state, css, formatDateTime, mouseEnter, mouseLeave}
+    function setActive(id) {
+      state.selectedID=id
+    }
+
+
+    return {state, css, issueBars, formatDateTime, mouseEnter, mouseLeave, setActive}
   }
 
 }
