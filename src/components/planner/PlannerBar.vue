@@ -1,11 +1,11 @@
 <template>
-  <rect :class="{'bar__standard':(!issue.isActive && !issue.isPreselected && !issue.isHighlighted), 'bar__preselected': issue.isPreselected, 'bar__active':issue.isActive, 'bar__highlighted':issue.isHighlighted}" :x="issue.bar.x1" :width="issue.bar.width" height="10" />
+  <rect :class="{'bar__standard':(!bar.isActive && !bar.isPreselected && !bar.isHighlighted), 'bar__preselected': bar.isPreselected, 'bar__active':bar.isActive, 'bar__highlighted':bar.isHighlighted}" :x="bar.bar.x1" :width="bar.bar.width" height="10" :y="bar.bar.y" />
 </template>
 
 <script>
 export default {
   name: "PlannerBar",
-  props: ["issue", "type"],
+  props: ["bar"],
 }
 </script>
 

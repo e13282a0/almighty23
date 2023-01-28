@@ -1,11 +1,11 @@
 <template>
-  <text class="grid_font__issue--name" :x="0" y="10">{{ issue.name }}</text>
+  <text class="grid_font__issue--name" :x="0" y="10">{{ row.label }}</text>
 </template>
 
 <script>
 export default {
   name: "PlannerName",
-  props: ["issue", "type"],
+  props: ["row"],
 }
 </script>
 

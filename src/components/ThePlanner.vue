@@ -29,15 +29,19 @@
       </g>
       <line class="grid-lines--major" x1="0" :x2="state.width" :y1="state.headerHeight" :y2="state.headerHeight"></line>
     </g>
-    <!-- Bars -->
+    <!-- Rows -->
     <g id="body" :style="`transform: translateY( ${state.headerHeight}px)`">
-      <g id="row" v-for="(issue, index) in issueBars" :style="`transform: translateY(${(index*state.rowHeight)}px`">
-        <planner-name :issue="issue" type="issue" />
-        <planner-bar :issue="issue" type="issue" @click="setActive(issue.id,$event)" @mousedown="startSlide(issue.id,$event)"/>
+      <g id="row" v-for="(row, index) in rows" :style="`transform: translateY(${(index*state.rowHeight)}px`">
+        <planner-name :row="row" type="issue" />
+      </g>
+      <g id="bars" v-for="bar in bars">
+        <!-- preview -->
+        <rect v-if="dragDrop.dragging" class="bar__preview" :x="dragDrop.previewBar.bar.x1" :width="dragDrop.previewBar.bar.width" height="10" :y="dragDrop.previewBar.bar.y" />
+        <!-- bar -->
+        <planner-bar :bar="bar" @mousedown="startSlide(bar.id,$event)" @click="setActive(bar.id,$event)" />
       </g>
     </g>
-    <!-- preview -->
-    <rect v-if="dragDrop.dragging" class="bar__preview" :x="dragDrop.previewBar.bar.x1" :width="dragDrop.previewBar.bar.width" height="10" />
+
 
   </svg>
 
@@ -75,7 +79,9 @@ export default {
       rowHeight: rowHeight,
       width: namesColumnWidth + (timeBeam.length * colWidth),
       height: headerHeight + ((props.issues.length + 1) * rowHeight),
+      minX:padding,
       maxX:namesColumnWidth + (timeBeam.length * colWidth)+padding,
+      minY:0,
       maxY: headerHeight + ((props.issues.length + 1) * rowHeight)+padding,
       gridWidth: (timeBeam.length * colWidth),
       gridHeight: ((props.issues.length + 1) * rowHeight),
@@ -91,14 +97,30 @@ export default {
       issue.isActive=issue.id=== state.selectedID
       issue.isPreselected=false
       issue.isHighlighted=false
-      issue.bar = {x1: x1, x2: x2, width: x2 - x1};
+      issue.bar = {x1: x1, x2: x2, width: x2 - x1, y:issue.row*rowHeight};
       return issue;
     }
-    const issueBars = computed(() => {
-      return props.issues.map(issue => {
-        return makeBar(issue)
-      });
+
+    let _rows=[] // make rows available as array for bars
+    let rows=computed(() => {
+
+      props.issues.forEach((issue, index)=>{
+        _rows.push({
+          no:index,
+          label:issue.name,
+          id:issue.id
+        })
+      })
+      return _rows.sort((a,b)=>a.no-b.no)
     })
+
+    const bars=computed(() => {
+      return props.issues.map((issue)=>{
+        issue.row = _rows.find(elm=>elm.id === issue.id).no
+        return makeBar(issue)
+      })
+    })
+
 
     const css = reactive({
       padding: padding + "px"
@@ -159,7 +181,6 @@ export default {
     }
 
     function doSlide(e) {
-
       e.stopPropagation();
       //let gridSize = this.displayParams.colWidth;
 
@@ -167,18 +188,19 @@ export default {
         return val - Math.min(Math.max(val - diff, min), max);
       }
 
+      let rounded = getGridSelectionPos(e.pageX, e.pageY)
+
       dragDrop.diff = {
         x: dragDrop.coords.x - e.pageX,
         y: dragDrop.coords.y - e.pageY
       }
 
-
       //console.log('xDiff: ' + xDiff);
       //if (this.actHandleID === "val0") {
 
-      dragDrop.previewBar.bar.x1 -= filterDiff(dragDrop.previewBar.bar.x1, dragDrop.diff.x, 0, state.maxX);
-      dragDrop.previewBar.bar.x2 -= filterDiff(dragDrop.previewBar.bar.x2, dragDrop.diff.x, 0, state.maxX);
-      dragDrop.previewBar.bar.y -= filterDiff(dragDrop.previewBar.bar.y, dragDrop.diff.y, 0, state.maxY);
+      dragDrop.previewBar.bar.x1 -= filterDiff(dragDrop.previewBar.bar.x1, dragDrop.diff.x, state.minX, state.maxX);
+      dragDrop.previewBar.bar.x2 -= filterDiff(dragDrop.previewBar.bar.x2, dragDrop.diff.x, state.minX, state.maxX);
+      dragDrop.previewBar.bar.y -= filterDiff(dragDrop.previewBar.bar.y, dragDrop.diff.y, state.minY, state.maxY);
 
       //console.log(dragDrop.previewBar.bar.x1)
 
@@ -226,11 +248,10 @@ export default {
 
     function setActive(id) {
       state.selectedID=id
-      dragDrop.previewBar= Object.assign({},state.selectedID>0? makeBar(props.issues.find(elm=>elm.id===id)):{})
+      dragDrop.previewBar = Object.assign({},makeBar(props.issues.find(elm=>elm.id===id)))
     }
 
-
-    return {state, css, issueBars,dragDrop, formatDateTime, gridMouseEnter, gridMouseLeave, setActive,startSlide}
+    return {state, css, rows, bars, dragDrop, formatDateTime, gridMouseEnter, gridMouseLeave, setActive,startSlide}
   }
 
 }
