@@ -36,7 +36,7 @@
       </g>
       <g id="bars" v-for="bar in bars">
         <!-- preview -->
-        <rect v-if="dragDrop.dragging" class="bar__preview" :x="dragDrop.previewBar.bar.x1" :width="dragDrop.previewBar.bar.width" height="10" :y="dragDrop.previewBar.bar.y" />
+        <rect v-if="dragDrop.dragging" class="bar__preview" :x="roundXtoGrid(dragDrop.previewBar.bar.x1)" :width="dragDrop.previewBar.bar.width" height="10" :y="roundYtoGrid(dragDrop.previewBar.bar.y)" />
         <!-- bar -->
         <planner-bar :bar="bar" @mousedown="startSlide(bar.id,$event)" @click="setActive(bar.id,$event)" />
       </g>
@@ -132,11 +132,19 @@ export default {
     //  return `cursor: ${state.dragOffsetX ? 'grabbing' : 'grab'}`
     //}
 
+    function roundXtoGrid(x) {
+      return Math.round(x / colWidth) * colWidth
+    }
+
+    function roundYtoGrid(y){
+      return Math.round(y / rowHeight) * rowHeight
+    }
+
     function getGridSelectionPos(pageX, pageY) {
       let x = pageX - padding - namesColumnWidth;
       let y = pageY - padding - headerHeight;
-      let roundedX = Math.floor(x / colWidth) * colWidth
-      let roundedY = Math.floor(y / rowHeight) * rowHeight
+      let roundedX = roundXtoGrid(x)
+      let roundedY = roundYtoGrid(y)
       return {x: roundedX, y: roundedY}
     }
 
@@ -249,7 +257,7 @@ export default {
       dragDrop.previewBar = Object.assign({},makeBar(props.issues.find(elm=>elm.id===id)))
     }
 
-    return {state, css, rows, bars, dragDrop, formatDateTime, gridMouseEnter, gridMouseLeave, setActive,startSlide}
+    return {state, css, rows, bars, dragDrop, formatDateTime, gridMouseEnter, gridMouseLeave, setActive,startSlide,roundXtoGrid,roundYtoGrid}
   }
 
 }
