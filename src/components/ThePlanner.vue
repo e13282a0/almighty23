@@ -44,7 +44,7 @@
 
 
   </svg>
-
+  <br>
   {{ issues }}
 </template>
 
@@ -79,10 +79,10 @@ export default {
       rowHeight: rowHeight,
       width: namesColumnWidth + (timeBeam.length * colWidth),
       height: headerHeight + ((props.issues.length + 1) * rowHeight),
-      minX:padding,
-      maxX:namesColumnWidth + (timeBeam.length * colWidth)+padding,
+      minX:namesColumnWidth,
+      maxX:namesColumnWidth + (timeBeam.length * colWidth),
       minY:0,
-      maxY: headerHeight + ((props.issues.length + 1) * rowHeight)+padding,
+      maxY: ((props.issues.length + 1) * rowHeight)+padding,
       gridWidth: (timeBeam.length * colWidth),
       gridHeight: ((props.issues.length + 1) * rowHeight),
       timeBeam: timeBeam,
@@ -103,7 +103,6 @@ export default {
 
     let _rows=[] // make rows available as array for bars
     let rows=computed(() => {
-
       props.issues.forEach((issue, index)=>{
         _rows.push({
           no:index,
@@ -120,7 +119,6 @@ export default {
         return makeBar(issue)
       })
     })
-
 
     const css = reactive({
       padding: padding + "px"
