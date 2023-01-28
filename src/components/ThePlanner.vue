@@ -3,7 +3,7 @@
   <svg :width="state.width" :height="state.height" class="planner">
 
     <planner-grid-selector v-if="state.gridSelector" :x="state.namesColumnWidth+state.gridSelectionPos.x" :y="state.headerHeight+state.gridSelectionPos.y" :width="state.colWidth" :height="state.rowHeight" />
-    <rect class="grid-background" :x="state.namesColumnWidth" :y="state.headerHeight" :width="state.gridWidth" :height="state.gridHeight" @mouseenter="mouseEnter" @mouseleave="mouseLeave" />
+    <rect class="grid-background" :x="state.namesColumnWidth" :y="state.headerHeight" :width="state.gridWidth" :height="state.gridHeight" @mouseenter="gridMouseEnter" @mouseleave="gridMouseLeave" />
 
     <!-- Grid -->
     <g id="vertical" v-for="(elm, index) in state.timeBeam">
@@ -28,15 +28,16 @@
         <text class="grid_font__head--day" :x="(index*state.colWidth)+state.namesColumnWidth+1" y="40">{{ formatDateTime(elm.startDate, "dd") }}</text>
       </g>
       <line class="grid-lines--major" x1="0" :x2="state.width" :y1="state.headerHeight" :y2="state.headerHeight"></line>
-
     </g>
     <!-- Bars -->
     <g id="body" :style="`transform: translateY( ${state.headerHeight}px)`">
       <g id="row" v-for="(issue, index) in issueBars" :style="`transform: translateY(${(index*state.rowHeight)}px`">
         <planner-name :issue="issue" type="issue" />
-        <planner-bar :issue="issue" type="issue" @click="setActive(issue.id)"/>
+        <planner-bar :issue="issue" type="issue" @click="setActive(issue.id,$event)" @mousedown="startSlide(issue.id,$event)"/>
       </g>
     </g>
+    <!-- preview -->
+    <rect v-if="dragDrop.dragging" class="bar__preview" :x="dragDrop.previewBar.bar.x1" :width="dragDrop.previewBar.bar.width" height="10" />
 
   </svg>
 
@@ -67,8 +68,6 @@ export default {
     let padding = 10
     //debugger
 
-
-
     const state = reactive({
       colWidth: colWidth,
       namesColumnWidth: namesColumnWidth,
@@ -76,6 +75,8 @@ export default {
       rowHeight: rowHeight,
       width: namesColumnWidth + (timeBeam.length * colWidth),
       height: headerHeight + ((props.issues.length + 1) * rowHeight),
+      maxX:namesColumnWidth + (timeBeam.length * colWidth)+padding,
+      maxY: headerHeight + ((props.issues.length + 1) * rowHeight)+padding,
       gridWidth: (timeBeam.length * colWidth),
       gridHeight: ((props.issues.length + 1) * rowHeight),
       timeBeam: timeBeam,
@@ -84,16 +85,18 @@ export default {
       gridSelectionPos: {x: 0, y: 0},
     })
 
+    function makeBar(issue) {
+      let x1 = getTimeBeamPositionByDate(issue.startDate, colWidth, timeBeam)
+      let x2 = getTimeBeamPositionByDate(issue.endDate, colWidth, timeBeam)
+      issue.isActive=issue.id=== state.selectedID
+      issue.isPreselected=false
+      issue.isHighlighted=false
+      issue.bar = {x1: x1, x2: x2, width: x2 - x1};
+      return issue;
+    }
     const issueBars = computed(() => {
       return props.issues.map(issue => {
-        // size and position bars
-        let x1 = getTimeBeamPositionByDate(issue.startDate, colWidth, timeBeam)
-        let x2 = getTimeBeamPositionByDate(issue.endDate, colWidth, timeBeam)
-        issue.isActive=issue.id=== state.selectedID
-        issue.isPreselected=false
-        issue.isHighlighted=false
-        issue.bar = {x1: x1, x2: x2, width: x2 - x1};
-        return issue;
+        return makeBar(issue)
       });
     })
 
@@ -105,9 +108,9 @@ export default {
       return moment(value).format(format);
     }
 
-    function cursor() {
-      return `cursor: ${state.dragOffsetX ? 'grabbing' : 'grab'}`
-    }
+    //function cursor() {
+    //  return `cursor: ${state.dragOffsetX ? 'grabbing' : 'grab'}`
+    //}
 
     function getGridSelectionPos(pageX, pageY) {
       let x = pageX - padding - namesColumnWidth;
@@ -117,29 +120,117 @@ export default {
       return {x: roundedX, y: roundedY}
     }
 
-    function mouseEnter(event) {
+    function gridMouseEnter(event) {
       console.log('mouseenter');
       state.gridSelector = true;
       event.target.addEventListener('mousemove', mouseMove, false);
     }
 
-    function mouseLeave(event) {
-      console.log('mouseleave');
+    function gridMouseLeave(event) {
+      //console.log('mouseleave');
       state.gridSelector = false;
       event.target.removeEventListener('mousemove', mouseMove);
     }
 
     function mouseMove(event) {
-        console.log(event.pageX, event.pageY);
+        //console.log(event.pageX, event.pageY);
         state.gridSelectionPos = getGridSelectionPos(event.pageX, event.pageY)
+    }
+
+    const dragDrop = reactive({
+      dragging:false,
+      previewBar:{},
+      coords:{
+        x:null,
+        y:null
+      },
+    })
+
+    function startSlide (id, e) {
+      //this.actHandleID = e.target.parentElement.id;
+      //debugger
+      setActive(id)
+      dragDrop.coords.x = e.pageX
+      dragDrop.coords.y = e.pageY
+      document.addEventListener("mousemove", doSlide);
+      document.addEventListener("mouseup", endSlide);
+      dragDrop.dragging = true;
+      dragDrop.diff={}
+    }
+
+    function doSlide(e) {
+
+      e.stopPropagation();
+      //let gridSize = this.displayParams.colWidth;
+
+      function filterDiff(val, diff, min, max) {
+        return val - Math.min(Math.max(val - diff, min), max);
+      }
+
+      dragDrop.diff = {
+        x: dragDrop.coords.x - e.pageX,
+        y: dragDrop.coords.y - e.pageY
+      }
+
+
+      //console.log('xDiff: ' + xDiff);
+      //if (this.actHandleID === "val0") {
+
+      dragDrop.previewBar.bar.x1 -= filterDiff(dragDrop.previewBar.bar.x1, dragDrop.diff.x, 0, state.maxX);
+      dragDrop.previewBar.bar.x2 -= filterDiff(dragDrop.previewBar.bar.x2, dragDrop.diff.x, 0, state.maxX);
+      dragDrop.previewBar.bar.y -= filterDiff(dragDrop.previewBar.bar.y, dragDrop.diff.y, 0, state.maxY);
+
+      //console.log(dragDrop.previewBar.bar.x1)
+
+      // } else if (this.actHandleID === "val2") {
+      //  this.activePlanning.bar.x2 -= filterDiff(this.activePlanning.bar.x2, diff.x, this.activePlanning.bar.x1 + gridSize, this.viewBoxParams.plannerWidth - 5);
+      //} else if (this.actHandleID === "val1") {
+      //  this.activePlanning.bar.x1 -= filterDiff(this.activePlanning.bar.x1, diff.x, 0, this.activePlanning.bar.x2 - gridSize);
+      //}
+      //this.activePlanning.bar.width = this.activePlanning.bar.x2 - this.activePlanning.bar.x1;
+      dragDrop.coords.x = e.pageX;
+      dragDrop.coords.y = e.pageY;
+    }
+
+    function endSlide (e) {
+      e.stopPropagation();
+
+      document.removeEventListener("mousemove", doSlide);
+      document.removeEventListener("mouseup", endSlide);
+
+      // // round values
+      // this.activePlanning.bar = this.previewBar;
+      // // set dates
+      // let indexX1 = Math.round(this.activePlanning.bar.x1 / this.displayParams.colWidth); //index in TimeBeam
+      // let indexX2 = Math.round(this.activePlanning.bar.x2 / this.displayParams.colWidth) - 1; //index in TimeBeam
+      // let startDate = this.timeBeam[indexX1].startDate;
+      // let endDate = this.timeBeam[indexX2].endDate;
+      // // this.activePlanning.start_date = startDate.toLocaleDateString("nl", {year: "numeric", month: "2-digit", day: "2-digit", timeZone: 'UTC'});
+      // // this.activePlanning.end_date = endDate.toLocaleDateString("nl", {year: "numeric", month: "2-digit", day: "2-digit", timeZone: 'UTC'});
+      // this.activePlanning.start_date = startDate.format('YYYY-MM-DD');
+      // this.activePlanning.end_date = endDate.format('YYYY-MM-DD');
+      // this.activePlanning.startDate = startDate;
+      // this.activePlanning.endDate = endDate;
+      // // set user
+      // let row = Math.round(this.activePlanning.bar.y / this.displayParams.rowHeight);
+      // let _people = this.people.find(elm => elm.row === row);
+      // this.activePlanning.people_id = _people.id;
+      // this.activePlanning.people = _people;
+      // this.persistPlanning(this.activePlanning);
+
+      // zurücksetzen
+      dragDrop.dragging = false;
+      dragDrop.coords = {};
+      state.selectedID = -1;
     }
 
     function setActive(id) {
       state.selectedID=id
+      dragDrop.previewBar= Object.assign({},state.selectedID>0? makeBar(props.issues.find(elm=>elm.id===id)):{})
     }
 
 
-    return {state, css, issueBars, formatDateTime, mouseEnter, mouseLeave, setActive}
+    return {state, css, issueBars,dragDrop, formatDateTime, gridMouseEnter, gridMouseLeave, setActive,startSlide}
   }
 
 }
@@ -184,5 +275,12 @@ export default {
 .grid-background {
   fill: white;
   fill-opacity: 0.01;
+}
+
+.bar__preview {
+  fill: white;
+  fill-opacity: 0.01;
+  stroke: blue;
+  stroke-dasharray: 4 2;
 }
 </style>

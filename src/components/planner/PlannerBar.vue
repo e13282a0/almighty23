@@ -1,5 +1,5 @@
 <template>
-  <rect :class="{'bar__standard':(!issue.isActive && !issue.isPreselected && !issue.isHighlighted), 'bar__preselected': issue.isPreselected, 'bar__active':issue.isActive, 'bar__highlighted':issue.isHighlighted}" :x="issue.bar.x1" :width="issue.bar.width" height="10"></rect>
+  <rect :class="{'bar__standard':(!issue.isActive && !issue.isPreselected && !issue.isHighlighted), 'bar__preselected': issue.isPreselected, 'bar__active':issue.isActive, 'bar__highlighted':issue.isHighlighted}" :x="issue.bar.x1" :width="issue.bar.width" height="10" />
 </template>
 
 <script>
