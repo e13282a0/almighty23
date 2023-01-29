@@ -79,8 +79,9 @@ export function getTimeBeamIndexByDate(date, timeBeam) {
     return index < 0 ? 0 : index;
 }
 export function getTimeBeamPositionByDate(date, width, timeBeam) {
-    let index =getTimeBeamIndexByDate(date, timeBeam)
+    let index = getTimeBeamIndexByDate(date, timeBeam)
     if (index < 0) return 0;
+
 
     let timeSpan = Math.round(timeBeam[index].endDate.diff(timeBeam[index].startDate, "minutes"));
     let minutes = moment(date).diff(timeBeam[index].startDate, "minutes");
@@ -95,4 +96,13 @@ export function getTimeBeamLengthByDate(date1, date2, width, timeBeam) {
     let pos2=getTimeBeamPositionByDate(date2, width, timeBeam)
     let pos1=getTimeBeamPositionByDate(date1, width, timeBeam)
     return pos2-pos1;
+}
+
+export function getTimeBeamDateByPosition(position, width, timeBeam) {
+    let index=Math.floor(position/width)
+    let offset=position%width
+    //let startDate=timeBeam[index]
+    let result= moment(timeBeam[index].startDate).add((offset/width)*(moment(timeBeam[index].endDate).diff(timeBeam[index].startDate, "minutes")))
+    //debugger
+    return result
 }

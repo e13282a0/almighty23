@@ -31,10 +31,10 @@
     </g>
     <!-- Rows -->
     <g id="body" :style="`transform: translateY( ${state.headerHeight}px)`">
-      <g id="row" v-for="(row, index) in rows" :style="`transform: translateY(${(index*state.rowHeight)}px`">
+      <g id="left" v-for="(row, index) in rows" :style="`transform: translateY(${(index*state.rowHeight)}px`">
         <planner-name :row="row" type="issue" />
       </g>
-      <g id="bars" v-for="bar in bars">
+      <g id="bars" v-for="bar in bars" :style="`transform: translateX( ${state.namesColumnWidth}px)`">
         <!-- preview -->
         <rect v-if="dragDrop.dragging" class="bar__preview" :x="roundXtoGrid(dragDrop.previewBar.bar.x1)" :width="dragDrop.previewBar.bar.width" height="10" :y="roundYtoGrid(dragDrop.previewBar.bar.y)" />
         <!-- bar -->
@@ -51,7 +51,7 @@
 <script>
 
 import {reactive, computed} from 'vue';
-import {makeTimeBeam, getTimeBeamIndexByDate, getTimeBeamPositionByDate, getTimeBeamLengthByDate} from '@/mixins/timebeam'
+import {makeTimeBeam, getTimeBeamPositionByDate, getTimeBeamDateByPosition} from '@/mixins/timebeam'
 import moment from "moment";
 import _ from 'lodash'
 import PlannerGridSelector from "@/components/planner/PlannerGridSelector.vue";
@@ -79,10 +79,10 @@ export default {
       rowHeight: rowHeight,
       width: namesColumnWidth + (timeBeam.length * colWidth),
       height: headerHeight + ((props.issues.length + 1) * rowHeight),
-      minX:namesColumnWidth,
-      maxX:namesColumnWidth + (timeBeam.length * colWidth),
+      minX:0,
+      maxX:(timeBeam.length * colWidth),
       minY:0,
-      maxY: ((props.issues.length + 1) * rowHeight)+padding,
+      maxY: ((props.issues.length + 1) * rowHeight),
       gridWidth: (timeBeam.length * colWidth),
       gridHeight: ((props.issues.length + 1) * rowHeight),
       timeBeam: timeBeam,
@@ -194,8 +194,6 @@ export default {
         return val - Math.min(Math.max(val - diff, min), max);
       }
 
-      let rounded = getGridSelectionPos(e.pageX, e.pageY)
-
       dragDrop.diff = {
         x: dragDrop.coords.x - e.pageX,
         y: dragDrop.coords.y - e.pageY
@@ -203,11 +201,17 @@ export default {
 
       //console.log('xDiff: ' + xDiff);
       //if (this.actHandleID === "val0") {
+      let xStart = dragDrop.previewBar.bar.x1 - filterDiff(dragDrop.previewBar.bar.x1, dragDrop.diff.x, state.minX, state.maxX);
+      let startDate = getTimeBeamDateByPosition(dragDrop.previewBar.bar.x1, state.colWidth, state.timeBeam)
+      let duration = moment(dragDrop.previewBar.endDate).diff(dragDrop.previewBar.startDate, 'minutes')
+      let endDate= moment(startDate).add(duration,'minutes')
 
-      dragDrop.previewBar.bar.x1 -= filterDiff(dragDrop.previewBar.bar.x1, dragDrop.diff.x, state.minX, state.maxX);
-      dragDrop.previewBar.bar.x2 -= filterDiff(dragDrop.previewBar.bar.x2, dragDrop.diff.x, state.minX, state.maxX);
+      //debugger
+
+      dragDrop.previewBar.bar.x1 = xStart
+      dragDrop.previewBar.bar.width = getTimeBeamPositionByDate(endDate, state.colWidth, state.timeBeam)-xStart
       dragDrop.previewBar.bar.y -= filterDiff(dragDrop.previewBar.bar.y, dragDrop.diff.y, state.minY, state.maxY);
-
+      console.log(getTimeBeamDateByPosition(dragDrop.previewBar.bar.x1, state.colWidth, state.timeBeam).format('DD.MM.YYYY'))
       //console.log(dragDrop.previewBar.bar.x1)
 
       // } else if (this.actHandleID === "val2") {
